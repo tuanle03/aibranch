@@ -1,0 +1,39 @@
+{
+  "name": "aibranch",
+  "version": "1.0.0",
+  "description": "AI-powered git branch name generator",
+  "type": "module",
+  "bin": {
+    "aibranch": "dist/cli.mjs",
+    "aib": "dist/cli.mjs"
+  },
+  "scripts": {
+    "build": "pkgroll --minify",
+    "dev": "tsx src/cli.ts",
+    "test": "tsx tests"
+  },
+  "keywords": [
+    "ai",
+    "git",
+    "branch",
+    "cli"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@clack/prompts": "^0.11.0",
+    "cleye": "^2.0.0",
+    "execa": "^7.0.0",
+    "ini": "^3.0.1",
+    "kolorist": "^1.8.0",
+    "ai": "^6.0.13",
+    "@ai-sdk/openai": "^3.0.5",
+    "@ai-sdk/openai-compatible": "^2.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@types/ini": "^1.3.31",
+    "pkgroll": "^2.20.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}
