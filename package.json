@@ -1,5 +1,5 @@
 {
-  "name": "aibranch",
+  "name": "@tuanle03/aibranch",
   "version": "1.0.0",
   "description": "AI-powered git branch name generator",
   "type": "module",
@@ -7,18 +7,34 @@
     "aibranch": "dist/cli.mjs",
     "aib": "dist/cli.mjs"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "pkgroll --minify",
     "dev": "tsx src/cli.ts",
-    "test": "tsx tests"
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "ai",
     "git",
     "branch",
-    "cli"
+    "cli",
+    "automation",
+    "developer-tools"
   ],
+  "author": "tuanle03",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tuanle03/aibranch.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tuanle03/aibranch/issues"
+  },
+  "homepage": "https://github.com/tuanle03/aibranch#readme",
   "dependencies": {
     "@clack/prompts": "^0.11.0",
     "cleye": "^2.0.0",

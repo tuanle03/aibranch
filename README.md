@@ -2,7 +2,7 @@
 
 > AI-powered git branch name generator - Never think of a branch name again!
 
-[![npm version](https://img.shields.io/npm/v/aibranch.svg)](https://www.npmjs.com/package/aibranch)
+[![npm version](https://img.shields.io/npm/v/@tuanle03/aibranch.svg)](https://www.npmjs.com/package/@tuanle03/aibranch)
 
 ## 🚀 Features
 
@@ -16,7 +16,7 @@
 ## 📦 Installation
 
 ```bash
-npm install -g aibranch
+npm install -g @tuanle03/aibranch
 ```
 
 ## 🔧 Setup
