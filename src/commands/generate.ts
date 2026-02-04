@@ -1,5 +1,5 @@
 import * as p from "@clack/prompts";
-import { green, cyan, yellow } from "kolorist";
+import { green, cyan, yellow, blue, gray } from "kolorist";
 import {
   isGitRepository,
   getGitDiff,
@@ -7,8 +7,11 @@ import {
   getCurrentBranch,
   getRecentCommits,
   createBranch,
+  getChangedFiles,
+  detectChangeType,
+  getFileStats,
 } from "../utils/git.js";
-import { generateBranchNames } from "../utils/ai.js";
+import { generateBranchNames, generateDescription } from "../utils/ai.js";
 import { getConfig } from "../utils/config.js";
 
 export async function generateBranchCommand(flags: any) {
@@ -27,12 +30,103 @@ export async function generateBranchCommand(flags: any) {
 
   p.intro(cyan("🌿 AI Branch Name Generator"));
 
-  // Get description if not provided
+  // Detect changed files
+  const changedFiles = await getChangedFiles();
+  const hasChanges = changedFiles.length > 0;
+
   let description = flags.description;
+  let branchType = flags.type;
+
+  // If there are changes and no flags provided
+  if (hasChanges && !description && (!flags.type || flags.type === "feature")) {
+    const detection = detectChangeType(changedFiles);
+
+    if (detection) {
+      const confidenceLabel =
+        detection.confidence === "high"
+          ? "🎯"
+          : detection.confidence === "medium"
+            ? "🎲"
+            : "🤔";
+
+      p.note(
+        `📁 ${changedFiles.length} file(s) changed\n${blue(
+          `${confidenceLabel} Detected type: ${detection.type} (${detection.confidence} confidence)`,
+        )}\n${gray(
+          `Files: ${changedFiles.slice(0, 3).join(", ")}${
+            changedFiles.length > 3 ? "..." : ""
+          }`,
+        )}`,
+        "Auto-detection",
+      );
+
+      // Auto-generate or manual input?
+      const mode = await p.select({
+        message: "How do you want to proceed?",
+        options: [
+          {
+            value: "auto",
+            label: `🤖 Auto-generate (AI will analyze changes and create branch)`,
+          },
+          {
+            value: "manual",
+            label: "✏️  Manual input (describe changes yourself)",
+          },
+        ],
+        initialValue: "auto",
+      });
+
+      if (p.isCancel(mode)) {
+        p.cancel("Operation cancelled");
+        process.exit(0);
+      }
+
+      if (mode === "auto") {
+        // Let AI generate description
+        const spinner = p.spinner();
+        spinner.start("Analyzing changes...");
+
+        try {
+          const [diff, status, fileStats] = await Promise.all([
+            getGitDiff().catch(() => ""),
+            getGitStatus().catch(() => ""),
+            getFileStats().catch(() => ({ added: 0, modified: 0, deleted: 0 })),
+          ]);
+
+          description = await generateDescription({
+            files: changedFiles,
+            diff: diff.slice(0, 2000), // Limit diff size
+            status,
+            fileStats,
+          });
+
+          spinner.stop("Changes analyzed!");
+
+          p.note(
+            `${green("Generated description:")}\n"${description}"`,
+            "AI Analysis",
+          );
+
+          branchType = detection.type;
+        } catch (error: any) {
+          spinner.stop("Analysis failed");
+          p.log.error(error.message);
+          // Fall back to manual mode
+          mode === "manual";
+        }
+      }
+    }
+  }
+
+  // Get description if not provided (manual mode)
   if (!description) {
     description = await p.text({
-      message: "What is this branch for?",
-      placeholder: "e.g., Add user authentication feature",
+      message: hasChanges
+        ? "Describe your changes:"
+        : "What is this branch for?",
+      placeholder: hasChanges
+        ? "e.g., Update authentication docs"
+        : "e.g., Add user authentication feature",
     });
 
     if (p.isCancel(description)) {
@@ -42,16 +136,27 @@ export async function generateBranchCommand(flags: any) {
   }
 
   // Get branch type if not provided
-  let branchType = flags.type;
   if (!branchType || branchType === "feature") {
     branchType = await p.select({
       message: "Select branch type:",
       options: [
-        { value: "feature", label: "Feature - New feature" },
-        { value: "bugfix", label: "Bugfix - Bug fix" },
-        { value: "hotfix", label: "Hotfix - Urgent fix" },
-        { value: "release", label: "Release - Release branch" },
-        { value: "custom", label: "Custom - Enter custom type" },
+        { value: "feat", label: "feat - A new feature" },
+        { value: "fix", label: "fix - A bug fix" },
+        { value: "docs", label: "docs - Documentation only changes" },
+        {
+          value: "style",
+          label: "style - Code style changes (formatting, etc.)",
+        },
+        {
+          value: "refactor",
+          label: "refactor - Code refactoring",
+        },
+        { value: "perf", label: "perf - Performance improvements" },
+        { value: "test", label: "test - Adding or updating tests" },
+        { value: "chore", label: "chore - Build/tooling changes" },
+        { value: "build", label: "build - Build system changes" },
+        { value: "ci", label: "ci - CI configuration changes" },
+        { value: "custom", label: "custom - Enter custom type" },
       ],
     });
 
@@ -63,8 +168,13 @@ export async function generateBranchCommand(flags: any) {
     if (branchType === "custom") {
       branchType = await p.text({
         message: "Enter custom branch type:",
-        placeholder: "e.g., experiment, test",
+        placeholder: "e.g., hotfix, experiment",
       });
+
+      if (p.isCancel(branchType)) {
+        p.cancel("Operation cancelled");
+        process.exit(0);
+      }
     }
   }
 
@@ -84,6 +194,7 @@ export async function generateBranchCommand(flags: any) {
 Current Branch: ${currentBranch}
 Recent Commits: ${recentCommits.join(", ")}
 Git Status: ${status}
+${hasChanges ? `Changed Files: ${changedFiles.join(", ")}` : ""}
 ${diff ? `Recent Changes:\n${diff.slice(0, 1000)}` : ""}
     `.trim();
 
@@ -116,8 +227,13 @@ ${diff ? `Recent Changes:\n${diff.slice(0, 1000)}` : ""}
     if (selectedBranch === "__custom__") {
       finalBranchName = (await p.text({
         message: "Enter branch name:",
-        placeholder: "feature/my-custom-branch",
+        placeholder: "feat/my-custom-branch",
       })) as string;
+
+      if (p.isCancel(finalBranchName)) {
+        p.cancel("Operation cancelled");
+        process.exit(0);
+      }
     }
 
     // Create branch
@@ -138,7 +254,7 @@ ${diff ? `Recent Changes:\n${diff.slice(0, 1000)}` : ""}
     } else {
       p.outro(`Branch name: ${cyan(finalBranchName)}`);
     }
-  } catch (error) {
+  } catch (error: any) {
     spinner.stop("Failed to generate branch names");
     p.cancel(error.message);
     process.exit(1);
