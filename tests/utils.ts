@@ -1,10 +1,6 @@
 import path from "path";
 import { execa, execaNode, type Options } from "execa";
-import {
-  createFixture as createFixtureBase,
-  type FileTree,
-  type FsFixture,
-} from "fs-fixture";
+import { type FsFixture } from "fs-fixture";
 
 const aibranchPath = path.resolve("./dist/cli.mjs");
 

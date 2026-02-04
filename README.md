@@ -4,6 +4,8 @@
 
 [![npm version](https://img.shields.io/npm/v/@tuanle03/aibranch.svg)](https://www.npmjs.com/package/@tuanle03/aibranch)
 [![npm downloads](https://img.shields.io/npm/dm/@tuanle03/aibranch.svg)](https://www.npmjs.com/package/@tuanle03/aibranch)
+[![CI](https://github.com/tuanle03/aibranch/actions/workflows/ci.yml/badge.svg)](https://github.com/tuanle03/aibranch/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/tuanle03/aibranch/branch/main/graph/badge.svg)](https://codecov.io/gh/tuanle03/aibranch)
 [![GitHub Package](https://img.shields.io/badge/GitHub-Package-blue)](https://github.com/tuanle03/aibranch/pkgs/npm/aibranch)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
