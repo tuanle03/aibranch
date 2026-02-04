@@ -1,6 +1,6 @@
 {
   "name": "@tuanle03/aibranch",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "AI-powered git branch name generator with smart detection",
   "type": "module",
   "bin": {
@@ -14,11 +14,10 @@
   ],
   "scripts": {
     "build": "pkgroll --minify",
+    "type-check": "tsc",
+    "test": "tsx tests",
     "dev": "tsx src/cli.ts",
-    "prepublishOnly": "npm run build",
-    "version:patch": "npm version patch -m 'chore: bump version to %s'",
-    "version:minor": "npm version minor -m 'chore: bump version to %s'",
-    "version:major": "npm version major -m 'chore: bump version to %s'"
+    "prepublishOnly": "pnpm build"
   },
   "keywords": [
     "ai",
@@ -35,28 +34,22 @@
     "type": "git",
     "url": "git+https://github.com/tuanle03/aibranch.git"
   },
-  "bugs": {
-    "url": "https://github.com/tuanle03/aibranch/issues"
-  },
-  "homepage": "https://github.com/tuanle03/aibranch#readme",
-  "publishConfig": {
-    "access": "public",
-    "registry": "https://registry.npmjs.org"
-  },
   "dependencies": {
+    "@ai-sdk/openai": "^3.0.5",
+    "@ai-sdk/openai-compatible": "^2.0.4",
     "@clack/prompts": "^0.11.0",
+    "ai": "^6.0.13",
     "cleye": "^2.0.0",
     "execa": "^7.0.0",
     "ini": "^3.0.1",
-    "kolorist": "^1.8.0",
-    "ai": "^6.0.13",
-    "@ai-sdk/openai": "^3.0.5",
-    "@ai-sdk/openai-compatible": "^2.0.4",
-    "update-notifier": "^7.0.0"
+    "kolorist": "^1.8.0"
   },
   "devDependencies": {
-    "@types/node": "^24.10.1",
     "@types/ini": "^1.3.31",
+    "@types/node": "^24.10.1",
+    "@types/update-notifier": "^6.0.8",
+    "fs-fixture": "^1.2.0",
+    "manten": "^0.7.0",
     "pkgroll": "^2.20.1",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3"
