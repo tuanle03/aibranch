@@ -9,12 +9,19 @@ on:
       - "src/**"
       - ".github/workflows/publish.yml"
   workflow_dispatch:
+    inputs:
+      force_publish:
+        description: 'Force publish even if version unchanged'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   check-version:
     runs-on: ubuntu-latest
     outputs:
       should-publish: ${{ steps.check.outputs.changed }}
+      force-publish: ${{ github.event.inputs.force_publish == 'true' }}
       version: ${{ steps.get-version.outputs.version }}
     steps:
       - name: Checkout code
@@ -50,12 +57,20 @@ jobs:
 
   publish-npm:
     needs: check-version
-    if: needs.check-version.outputs.should-publish == 'true'
+    if: needs.check-version.outputs.should-publish == 'true' || needs.check-version.outputs.force-publish == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
     steps:
+      - name: Check publish reason
+        run: |
+          if [ "${{ needs.check-version.outputs.force-publish }}" == "true" ]; then
+            echo "📦 Publishing due to manual force publish"
+          else
+            echo "📦 Publishing due to version change: ${{ needs.check-version.outputs.version }}"
+          fi
+
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -94,12 +109,20 @@ jobs:
 
   publish-github:
     needs: check-version
-    if: needs.check-version.outputs.should-publish == 'true'
+    if: needs.check-version.outputs.should-publish == 'true' || needs.check-version.outputs.force-publish == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
     steps:
+      - name: Check publish reason
+        run: |
+          if [ "${{ needs.check-version.outputs.force-publish }}" == "true" ]; then
+            echo "📦 Publishing due to manual force publish"
+          else
+            echo "📦 Publishing due to version change: ${{ needs.check-version.outputs.version }}"
+          fi
+
       - name: Checkout code
         uses: actions/checkout@v4
 
