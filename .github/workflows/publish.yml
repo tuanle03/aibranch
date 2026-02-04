@@ -93,6 +93,8 @@ jobs:
       - name: Build project
         run: pnpm run build
 
+      # Uses OIDC Trusted Publishing (via permissions.id-token: write and --provenance flag)
+      # No NPM_TOKEN required - authentication handled automatically by GitHub Actions
       - name: Publish to npm
         run: pnpm publish --provenance --access public --no-git-checks
 
