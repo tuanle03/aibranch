@@ -15,7 +15,10 @@
   "scripts": {
     "build": "pkgroll --minify",
     "dev": "tsx src/cli.ts",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "version:patch": "npm version patch -m 'chore: bump version to %s'",
+    "version:minor": "npm version minor -m 'chore: bump version to %s'",
+    "version:major": "npm version major -m 'chore: bump version to %s'"
   },
   "keywords": [
     "ai",
@@ -36,6 +39,10 @@
     "url": "https://github.com/tuanle03/aibranch/issues"
   },
   "homepage": "https://github.com/tuanle03/aibranch#readme",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
   "dependencies": {
     "@clack/prompts": "^0.11.0",
     "cleye": "^2.0.0",
@@ -44,7 +51,8 @@
     "kolorist": "^1.8.0",
     "ai": "^6.0.13",
     "@ai-sdk/openai": "^3.0.5",
-    "@ai-sdk/openai-compatible": "^2.0.4"
+    "@ai-sdk/openai-compatible": "^2.0.4",
+    "update-notifier": "^7.0.0"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
