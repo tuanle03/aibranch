@@ -1,7 +1,7 @@
 {
   "name": "@tuanle03/aibranch",
-  "version": "1.0.0",
-  "description": "AI-powered git branch name generator",
+  "version": "1.1.0",
+  "description": "AI-powered git branch name generator with smart detection",
   "type": "module",
   "bin": {
     "aibranch": "dist/cli.mjs",
@@ -23,7 +23,8 @@
     "branch",
     "cli",
     "automation",
-    "developer-tools"
+    "developer-tools",
+    "conventional-commits"
   ],
   "author": "tuanle03",
   "license": "MIT",
