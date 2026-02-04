@@ -9,7 +9,7 @@
 # npm automation tokens bypass 2FA/OTP requirements and are designed for CI/CD workflows.
 #
 # To create an automation token:
-# 1. Go to https://www.npmjs.com/settings/<your-username>/tokens
+# 1. Go to https://www.npmjs.com/settings/{YOUR_USERNAME}/tokens
 # 2. Click "Generate New Token"
 # 3. Select "Automation" as the token type (NOT "Publish" or "Read-only")
 # 4. Copy the token and add it to GitHub repository secrets as NPM_TOKEN
