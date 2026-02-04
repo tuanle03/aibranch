@@ -1,57 +1,98 @@
 {
-  "name": "@tuanle03/aibranch",
-  "version": "1.2.0",
-  "description": "AI-powered git branch name generator with smart detection",
-  "type": "module",
-  "bin": {
-    "aibranch": "dist/cli.mjs",
-    "aib": "dist/cli.mjs"
-  },
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE"
-  ],
-  "scripts": {
-    "build": "pkgroll --minify",
-    "type-check": "tsc",
-    "test": "tsx tests",
-    "dev": "tsx src/cli.ts",
-    "prepublishOnly": "pnpm build"
-  },
-  "keywords": [
-    "ai",
-    "git",
-    "branch",
-    "cli",
-    "automation",
-    "developer-tools",
-    "conventional-commits"
-  ],
-  "author": "tuanle03",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/tuanle03/aibranch.git"
-  },
-  "dependencies": {
-    "@ai-sdk/openai": "^3.0.5",
-    "@ai-sdk/openai-compatible": "^2.0.4",
-    "@clack/prompts": "^0.11.0",
-    "ai": "^6.0.13",
-    "cleye": "^2.0.0",
-    "execa": "^7.0.0",
-    "ini": "^3.0.1",
-    "kolorist": "^1.8.0"
-  },
-  "devDependencies": {
-    "@types/ini": "^1.3.31",
-    "@types/node": "^24.10.1",
-    "@types/update-notifier": "^6.0.8",
-    "fs-fixture": "^1.2.0",
-    "manten": "^0.7.0",
-    "pkgroll": "^2.20.1",
-    "tsx": "^4.20.6",
-    "typescript": "^5.9.3"
-  }
+	"name": "@tuanle03/aibranch",
+	"version": "1.2.0",
+	"description": "AI-powered git branch name generator with smart detection",
+	"type": "module",
+	"bin": {
+		"aibranch": "dist/cli.mjs",
+		"aib": "dist/cli.mjs"
+	},
+	"files": [
+		"dist",
+		"README.md",
+		"LICENSE"
+	],
+	"exports": {
+		".": {
+			"import": "./dist/cli.mjs",
+			"types": "./dist/cli.d.ts"
+		},
+		"./package.json": "./package.json"
+	},
+	"engines": {
+		"node": ">=18.0.0",
+		"pnpm": ">=8.0.0"
+	},
+	"packageManager": "pnpm@9.0.0",
+	"scripts": {
+		"build": "pkgroll --minify",
+		"dev": "tsx src/cli.ts",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"test:coverage": "vitest run --coverage",
+		"type-check": "tsc --noEmit",
+		"lint": "eslint src tests --ext .ts",
+		"lint:fix": "eslint src tests --ext .ts --fix",
+		"format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
+		"format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\"",
+		"prepublishOnly": "pnpm run type-check && pnpm run lint && pnpm run test && pnpm run build",
+		"version:patch": "pnpm version patch -m 'chore: bump version to %s'",
+		"version:minor": "pnpm version minor -m 'chore: bump version to %s'",
+		"version:major": "pnpm version major -m 'chore: bump version to %s'"
+	},
+	"keywords": [
+		"ai",
+		"git",
+		"branch",
+		"cli",
+		"automation",
+		"developer-tools",
+		"conventional-commits",
+		"branch-naming",
+		"git-workflow",
+		"openai",
+		"typescript",
+		"node-cli"
+	],
+	"author": "tuanle03",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/tuanle03/aibranch.git"
+	},
+	"bugs": {
+		"url": "https://github.com/tuanle03/aibranch/issues"
+	},
+	"homepage": "https://github.com/tuanle03/aibranch#readme",
+	"publishConfig": {
+		"access": "public",
+		"registry": "https://registry.npmjs.org"
+	},
+	"dependencies": {
+		"@ai-sdk/openai": "^3.0.5",
+		"@ai-sdk/openai-compatible": "^2.0.4",
+		"@clack/prompts": "^0.11.0",
+		"ai": "^6.0.13",
+		"cleye": "^2.0.0",
+		"execa": "^7.0.0",
+		"ini": "^3.0.1",
+		"kolorist": "^1.8.0"
+	},
+	"devDependencies": {
+		"@types/ini": "^1.3.31",
+		"@types/node": "^24.10.1",
+		"@types/update-notifier": "^6.0.8",
+		"@typescript-eslint/eslint-plugin": "^6.21.0",
+		"@typescript-eslint/parser": "^6.21.0",
+		"@vitest/coverage-v8": "^2.0.0",
+		"eslint": "^8.57.0",
+		"fs-fixture": "^1.2.0",
+		"manten": "^0.7.0",
+		"pkgroll": "^2.20.1",
+		"prettier": "^3.2.5",
+		"tsx": "^4.20.6",
+		"typescript": "^5.9.3",
+		"vitest": "^2.0.0"
+	}
 }
+
