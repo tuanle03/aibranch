@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       force_publish:
-        description: 'Force publish even if version unchanged'
+        description: "Force publish even if version unchanged"
         required: false
         type: boolean
         default: false
@@ -82,7 +82,7 @@ jobs:
         with:
           node-version: "20"
           registry-url: "https://registry.npmjs.org"
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -93,10 +93,10 @@ jobs:
       - name: Build project
         run: pnpm run build
 
-      # Uses OIDC Trusted Publishing (via permissions.id-token: write and --provenance flag)
-      # No NPM_TOKEN required - authentication handled automatically by GitHub Actions
       - name: Publish to npm
         run: pnpm publish --provenance --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.TOKEN_NPM }}
 
       - name: Create Git Tag
         run: |
@@ -135,7 +135,7 @@ jobs:
           node-version: "20"
           registry-url: "https://npm.pkg.github.com"
           scope: "@tuanle03"
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -149,4 +149,4 @@ jobs:
       - name: Publish to GitHub Packages
         run: pnpm publish --no-git-checks
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.TOKEN_GITHUB }}
