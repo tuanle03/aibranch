@@ -1,6 +1,5 @@
 import * as p from "@clack/prompts";
-import { blue, gray, green, yellow } from "kolorist";
-import type { BranchType } from "./prompts.js";
+import { blue, gray } from "kolorist";
 
 export interface BranchTypeDetection {
   type: string;
