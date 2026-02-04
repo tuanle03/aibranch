@@ -1,7 +1,27 @@
 import { generateText } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { createOpenAI } from "@ai-sdk/openai";
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { getConfig } from "./config.js";
+import {
+  generateBranchNamePrompt,
+  generateDescriptionPrompt,
+} from "./prompts.js";
 
+/**
+ * Sanitize AI output following aicommits approach
+ */
+const sanitizeOutput = (text: string): string => {
+  return text
+    .trim()
+    .replace(/^["'`]|["'`]$/g, "")
+    .replace(/^\d+\.\s*/, "")
+    .replace(/^-\s*/, "");
+};
+
+/**
+ * Generate branch names using AI
+ * Follows aicommits pattern with improved error handling
+ */
 export async function generateBranchNames(options: {
   context: string;
   description?: string;
@@ -10,92 +30,69 @@ export async function generateBranchNames(options: {
 }): Promise<string[]> {
   const config = await getConfig();
 
-  const prompt = `
-  You are a senior Git workflow architect and naming convention specialist.
-
-  Your task is to generate Git branch names that strictly follow:
-  - Conventional Commits philosophy
-  - Clean Git flow practices
-  - Human-readable, production-grade naming
-
-  You must infer the intent of the changes from the context below and
-  translate that intent into short, meaningful branch names.
-
-  ────────────────────────────────────
-  INPUT
-  ────────────────────────────────────
-  Branch Type: ${options.type}
-
-  ${
-    options.description
-      ? `Task Description (human summary):
-  ${options.description}`
-      : ""
+  if (!config.OPENAI_API_KEY) {
+    throw new Error(
+      "OPENAI_API_KEY not configured. Run `aibranch setup` first.",
+    );
   }
 
-  Git Context (raw signals from repo):
-  ${options.context}
+  const prompt = generateBranchNamePrompt(
+    options.type,
+    options.description,
+    options.context,
+    options.count,
+  );
 
-  ────────────────────────────────────
-  NAMING RULES
-  ────────────────────────────────────
-  1. Format:
-     <type>/<short-action-object>
+  // Create provider based on base URL (following aicommits pattern)
+  const provider =
+    !config.OPENAI_BASE_URL ||
+    config.OPENAI_BASE_URL === "https://api.openai.com/v1"
+      ? createOpenAI({
+          apiKey: config.OPENAI_API_KEY,
+        })
+      : createOpenAICompatible({
+          name: "custom",
+          apiKey: config.OPENAI_API_KEY,
+          baseURL: config.OPENAI_BASE_URL,
+        });
 
-     Example:
-     feat/add-user-auth
-     fix/login-redirect
-     docs/update-readme
+  const model = provider(config.OPENAI_MODEL || "gpt-4o-mini");
 
-  2. Constraints:
-     - lowercase only
-     - words separated by hyphens
-     - no special characters
-     - no trailing slashes
-     - maximum length: 100 characters
+  try {
+    const { text } = await generateText({
+      model,
+      prompt,
+      temperature: 0.3,
+      maxRetries: 2,
+    });
 
-  3. Semantic Rules:
-     - Must describe WHAT is being changed
-     - Must NOT describe HOW
-     - Must avoid generic words (update, change, improve)
-     - Prefer verb-noun structure (add-user, fix-bug, remove-cache)
+    // Parse and validate output
+    const branches = text
+      .split("\n")
+      .map((line) => sanitizeOutput(line))
+      .filter((line) => line && line.includes("/"))
+      .filter((line) => line.length <= 50)
+      .slice(0, options.count);
 
-  4. Allowed types:
-     feat, fix, docs, style, refactor, perf, test, chore, build, ci
+    if (branches.length === 0) {
+      throw new Error("Failed to generate valid branch names");
+    }
 
-  ────────────────────────────────────
-  OUTPUT RULES
-  ────────────────────────────────────
-  - Generate exactly ${options.count} unique branch names
-  - One per line
-  - No numbering
-  - No explanations
-  - No markdown
-  - No extra text
-
-  Return only the branch names.
-  `;
-
-  const model = openai(config.OPENAI_MODEL || "gpt-4o-mini", {
-    apiKey: config.OPENAI_API_KEY,
-    baseURL: config.OPENAI_BASE_URL,
-  });
-
-  const { text } = await generateText({
-    model,
-    prompt,
-    temperature: 0.7,
-    maxTokens: 200,
-  });
-
-  return text
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line && !line.match(/^\d+\./))
-    .slice(0, options.count);
+    return branches;
+  } catch (error: any) {
+    if (error.message?.includes("API key")) {
+      throw new Error(
+        "Invalid API key. Run `aibranch config` to update your configuration.",
+      );
+    }
+    throw error;
+  }
 }
 
-// Generate description from git changes
+/**
+ * Generate description from git changes
+ * Follows aicommits pattern
+ */
 export async function generateDescription(options: {
   files: string[];
   diff: string;
@@ -104,69 +101,34 @@ export async function generateDescription(options: {
 }): Promise<string> {
   const config = await getConfig();
 
-  const prompt = `
-  You are a senior Git reviewer.
+  const prompt = generateDescriptionPrompt(
+    options.files,
+    options.diff,
+    options.status,
+    options.fileStats,
+  );
 
-  Your job is to analyze a set of git changes and infer
-  the **single most important intention** behind them.
+  // Create provider (same pattern)
+  const provider =
+    !config.OPENAI_BASE_URL ||
+    config.OPENAI_BASE_URL === "https://api.openai.com/v1"
+      ? createOpenAI({
+          apiKey: config.OPENAI_API_KEY,
+        })
+      : createOpenAICompatible({
+          name: "custom",
+          apiKey: config.OPENAI_API_KEY,
+          baseURL: config.OPENAI_BASE_URL,
+        });
 
-  You must summarize the change as if it were a commit subject line.
-
-  ────────────────────────────────────
-  REPO SIGNALS
-  ────────────────────────────────────
-
-  Changed Files (${options.files.length}):
-  ${options.files.slice(0, 10).join("\n")}
-  ${options.files.length > 10 ? `... and ${options.files.length - 10} more` : ""}
-
-  Git Status:
-  ${options.status}
-
-  Stats:
-  +${options.fileStats.added}  -${options.fileStats.deleted}
-  (${options.fileStats.modified} files changed)
-
-  Git Diff (partial context):
-  ${options.diff}
-
-  ────────────────────────────────────
-  DESCRIPTION RULES
-  ────────────────────────────────────
-  - Output a single sentence
-  - Use imperative mood
-    (e.g., "Add feature", not "Added feature")
-  - Describe WHAT changed, not HOW
-  - Be specific, avoid vague words
-  - Max length: 200 characters
-  - No punctuation at the end
-
-  Examples:
-  - Add user authentication
-  - Fix login redirect bug
-  - Update invoice export logic
-  - Refactor payment gateway adapter
-
-  ────────────────────────────────────
-  OUTPUT
-  ────────────────────────────────────
-  Return ONLY the description.
-  No quotes.
-  No markdown.
-  No extra words.
-  `;
-
-  const model = openai(config.OPENAI_MODEL || "gpt-4o-mini", {
-    apiKey: config.OPENAI_API_KEY,
-    baseURL: config.OPENAI_BASE_URL,
-  });
+  const model = provider(config.OPENAI_MODEL || "gpt-4o-mini");
 
   const { text } = await generateText({
     model,
     prompt,
-    temperature: 0.5,
-    maxTokens: 200,
+    temperature: 0.3,
+    maxRetries: 2,
   });
 
-  return text.trim();
+  return sanitizeOutput(text);
 }

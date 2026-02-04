@@ -4,11 +4,16 @@ import { red } from "kolorist";
 import { generateBranchCommand } from "./commands/generate.js";
 import { setupCommand } from "./commands/setup.js";
 import { configCommand } from "./commands/config.js";
+import { updateCommand } from "./commands/update.js";
+import { checkForUpdates, getCurrentVersion } from "./utils/version.js";
+
+// Check for updates (async, non-blocking)
+checkForUpdates();
 
 const aibranch = cli({
   name: "aibranch",
-  version: "1.0.0",
-  commands: [setupCommand, configCommand],
+  version: getCurrentVersion(),
+  commands: [setupCommand, configCommand, updateCommand],
   flags: {
     generate: {
       type: Number,
@@ -24,7 +29,8 @@ const aibranch = cli({
     type: {
       type: String,
       alias: "t",
-      description: "Branch type (feature/bugfix/hotfix/release)",
+      description:
+        "Branch type (feat/fix/docs/style/refactor/perf/test/chore/build/ci)",
       default: "feature",
     },
     create: {
@@ -38,7 +44,7 @@ const aibranch = cli({
 
 const { flags, command } = aibranch;
 
-// If no command, run the main branch generation
+// ✨ FIXED: Only run default command if no subcommand is provided
 if (!command) {
   try {
     await generateBranchCommand(flags);
@@ -47,3 +53,5 @@ if (!command) {
     process.exit(1);
   }
 }
+
+// Note: Subcommands (setup, config, update) are automatically handled by cleye
