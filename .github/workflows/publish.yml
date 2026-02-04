@@ -60,7 +60,7 @@ jobs:
     if: needs.check-version.outputs.should-publish == 'true' || needs.check-version.outputs.force-publish == 'true'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       id-token: write
     steps:
       - name: Check publish reason
@@ -105,7 +105,7 @@ jobs:
           git tag v${{ needs.check-version.outputs.version }}
           git push origin v${{ needs.check-version.outputs.version }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
 
   publish-github:
     needs: check-version
