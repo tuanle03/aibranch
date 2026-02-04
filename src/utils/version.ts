@@ -23,15 +23,15 @@ export function checkForUpdates() {
       message: `
 ┌─────────────────────────────────────────────────┐
 │                                                 │
-│   🎉 Update available for {packageName}        │
+│   🎉 Update available for {packageName}         │
 │                                                 │
 │   {currentVersion} → {latestVersion}            │
 │                                                 │
-│   Run the following to update:                 │
-│   npm install -g {packageName}                 │
+│   Run the following to update:                  │
+│   npm install -g {packageName}                  │
 │                                                 │
 │   Changelog:                                    │
-│   https://github.com/tuanle03/aibranch/releases│
+│   https://github.com/tuanle03/aibranch/releases │
 │                                                 │
 └─────────────────────────────────────────────────┘
     `.trim(),
