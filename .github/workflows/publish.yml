@@ -1,3 +1,27 @@
+# Publish Package Workflow
+#
+# This workflow publishes the package to npm and GitHub Packages when the version changes.
+#
+# NPM Token Requirements:
+# -----------------------
+# The NPM_TOKEN secret must be set to an npm AUTOMATION token, not a regular npm token.
+#
+# npm automation tokens bypass 2FA/OTP requirements and are designed for CI/CD workflows.
+#
+# To create an automation token:
+# 1. Go to https://www.npmjs.com/settings/{YOUR_USERNAME}/tokens
+# 2. Click "Generate New Token"
+# 3. Select "Automation" as the token type (NOT "Publish" or "Read-only")
+# 4. Copy the token and add it to GitHub repository secrets as NPM_TOKEN
+#
+# Automation tokens:
+# - Bypass 2FA/OTP requirements (will not trigger EOTP errors)
+# - Are designed for CI/CD pipelines
+# - Can be used with provenance publishing
+# - Have the same permissions as regular tokens but skip interactive auth
+#
+# For more info: https://docs.npmjs.com/about-access-tokens#automation-tokens
+
 name: Publish Package
 
 on:
@@ -93,6 +117,9 @@ jobs:
       - name: Build project
         run: pnpm run build
 
+      # Publish to npm registry using automation token
+      # The NPM_TOKEN secret MUST be an npm automation token (not a regular token)
+      # to bypass 2FA/OTP requirements. See workflow header for token setup instructions.
       - name: Publish to npm
         run: pnpm publish --provenance --access public --no-git-checks
         env:
