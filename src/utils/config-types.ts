@@ -45,7 +45,7 @@ export const configDefaults: ValidConfig = {
 
 const parseLocale = (value: string | undefined): string => {
 	if (!value) return configDefaults.locale;
-	if (!/^[a-zA-Z][a-zA-Z_-]*$/.test(value)) {
+	if (!/^[a-zA-Z][a-zA-Z_-]+$/.test(value)) {
 		throw new KnownError(
 			`Invalid locale "${value}". Must contain only letters, dashes, and underscores.`,
 		);
@@ -55,7 +55,7 @@ const parseLocale = (value: string | undefined): string => {
 
 const parseGenerate = (value: string | undefined): number => {
 	if (!value) return configDefaults.generate;
-	const n = parseInt(value, 10);
+	const n = Number(value);
 	if (!Number.isInteger(n) || n < 1 || n > 10) {
 		throw new KnownError(
 			`Invalid generate "${value}". Must be an integer between 1 and 10.`,
@@ -76,7 +76,7 @@ const parseType = (value: string | undefined): BranchType => {
 
 const parseMaxLength = (value: string | undefined): number => {
 	if (!value) return configDefaults['max-length'];
-	const n = parseInt(value, 10);
+	const n = Number(value);
 	if (!Number.isInteger(n) || n < 20) {
 		throw new KnownError(
 			`Invalid max-length "${value}". Must be an integer >= 20.`,
@@ -87,7 +87,7 @@ const parseMaxLength = (value: string | undefined): number => {
 
 const parseTimeout = (value: string | undefined): number => {
 	if (!value) return configDefaults.timeout;
-	const n = parseInt(value, 10);
+	const n = Number(value);
 	if (!Number.isInteger(n) || n < 500) {
 		throw new KnownError(
 			`Invalid timeout "${value}". Must be an integer >= 500ms.`,

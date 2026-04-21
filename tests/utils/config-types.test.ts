@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseConfig, configDefaults, BRANCH_TYPES } from '../../src/utils/config-types.js';
+import { parseConfig, BRANCH_TYPES } from '../../src/utils/config-types.js';
 import { KnownError } from '../../src/utils/error.js';
 
 describe('parseConfig', () => {
@@ -75,5 +75,23 @@ describe('parseConfig', () => {
 		expect(result.OPENAI_BASE_URL).toBe('https://api.groq.com/openai/v1');
 		expect(result.OPENAI_MODEL).toBe('llama3');
 		expect(result.provider).toBe('groq');
+	});
+
+	it('throws KnownError for truncated numeric strings like "5abc"', () => {
+		expect(() => parseConfig({ generate: '5abc' })).toThrow(KnownError);
+		expect(() => parseConfig({ 'max-length': '30abc' })).toThrow(KnownError);
+		expect(() => parseConfig({ timeout: '1000abc' })).toThrow(KnownError);
+	});
+
+	it('throws KnownError for single-character locale', () => {
+		expect(() => parseConfig({ locale: 'a' })).toThrow(KnownError);
+	});
+
+	it('normalises empty OPENAI_API_KEY string to undefined', () => {
+		expect(parseConfig({ OPENAI_API_KEY: '' }).OPENAI_API_KEY).toBeUndefined();
+	});
+
+	it('throws KnownError for negative generate value', () => {
+		expect(() => parseConfig({ generate: '-1' })).toThrow(KnownError);
 	});
 });
