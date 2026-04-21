@@ -1,6 +1,6 @@
-import * as p from '@clack/prompts';
-import { green, cyan, yellow } from 'kolorist';
-import clipboard from 'clipboardy';
+import * as p from "@clack/prompts";
+import { green, cyan, yellow } from "kolorist";
+import clipboard from "clipboardy";
 import {
 	isGitRepository,
 	getGitDiff,
@@ -11,10 +11,13 @@ import {
 	getChangedFiles,
 	detectChangeType,
 	getFileStats,
-} from '../utils/git.js';
-import { generateBranchNames, generateDescription } from '../utils/ai.js';
-import { getConfig } from '../utils/config-runtime.js';
-import { selectBranchType, showDetectionInfo } from '../utils/branch-helpers.js';
+} from "../utils/git.js";
+import { generateBranchNames, generateDescription } from "../utils/ai.js";
+import { getConfig } from "../utils/config-runtime.js";
+import {
+	selectBranchType,
+	showDetectionInfo,
+} from "../utils/branch-helpers.js";
 
 export async function generateBranchCommand(flags: {
 	generate?: number;
@@ -28,8 +31,11 @@ export async function generateBranchCommand(flags: {
 	const isHeadless = !process.stdout.isTTY;
 
 	if (!(await isGitRepository())) {
-		if (isHeadless) { process.stderr.write('Not a git repository\n'); process.exit(1); }
-		p.cancel('Not a git repository!');
+		if (isHeadless) {
+			process.stderr.write("Not a git repository\n");
+			process.exit(1);
+		}
+		p.cancel("Not a git repository!");
 		process.exit(1);
 	}
 
@@ -37,22 +43,24 @@ export async function generateBranchCommand(flags: {
 
 	if (!config.OPENAI_API_KEY) {
 		if (isHeadless) {
-			process.stderr.write('Run `aibranch setup` first to configure your API key\n');
+			process.stderr.write(
+				"Run `aibranch setup` first to configure your API key\n"
+			);
 			process.exit(1);
 		}
-		p.cancel('Please run `aibranch setup` first to configure your API key');
+		p.cancel("Please run `aibranch setup` first to configure your API key");
 		process.exit(1);
 	}
 
-	if (!isHeadless) p.intro(cyan('🌿 AI Branch Name Generator'));
+	if (!isHeadless) p.intro(cyan("🌿 AI Branch Name Generator"));
 
 	if (flags.all) {
-		const { execa } = await import('execa');
-		await execa('git', ['add', '--update']);
+		const { execa } = await import("execa");
+		await execa("git", ["add", "--update"]);
 	}
 
 	const excludedFiles = flags.exclude
-		? flags.exclude.split(',').map((f) => f.trim())
+		? flags.exclude.split(",").map((f) => f.trim())
 		: [];
 
 	let changedFiles = await getChangedFiles();
@@ -65,90 +73,85 @@ export async function generateBranchCommand(flags: {
 	const typeFromFlag = Boolean(flags.type);
 	let branchType: string = flags.type || config.type;
 
-	if (!isHeadless && hasChanges && !description && !typeFromFlag) {
+	if (hasChanges && !description && !typeFromFlag) {
 		const detection = detectChangeType(changedFiles);
+		if (detection && !branchType) branchType = detection.type;
 
-		if (detection) {
-			showDetectionInfo(detection, changedFiles);
+		if (!isHeadless) {
+			if (detection) showDetectionInfo(detection, changedFiles);
 
-			const mode = await p.select({
-				message: 'How do you want to proceed?',
-				options: [
-					{ value: 'auto', label: '🤖 Auto-generate (AI will analyze changes)' },
-					{ value: 'manual', label: '✏️  Manual input (describe changes yourself)' },
-				],
-				initialValue: 'auto',
-			});
+			const spinner = p.spinner();
+			spinner.start("Analyzing changes...");
 
-			if (p.isCancel(mode)) { p.cancel('Operation cancelled'); process.exit(0); }
+			try {
+				const [diff, status, fileStats] = await Promise.all([
+					getGitDiff().catch(() => ""),
+					getGitStatus().catch(() => ""),
+					getFileStats().catch(() => ({ added: 0, modified: 0, deleted: 0 })),
+				]);
 
-			if (mode === 'auto') {
-				const spinner = p.spinner();
-				spinner.start('Analyzing changes...');
+				description = await generateDescription({
+					files: changedFiles,
+					diff: diff.slice(0, 2000),
+					status,
+					fileStats,
+				});
 
-				try {
-					const [diff, status, fileStats] = await Promise.all([
-						getGitDiff().catch(() => ''),
-						getGitStatus().catch(() => ''),
-						getFileStats().catch(() => ({ added: 0, modified: 0, deleted: 0 })),
-					]);
-
-					description = await generateDescription({
-						files: changedFiles,
-						diff: diff.slice(0, 2000),
-						status,
-						fileStats,
-					});
-
-					spinner.stop('Changes analyzed!');
-					p.note(`${green('Generated description:')}\n"${description}"`, 'AI Analysis');
-					branchType = detection.type;
-				} catch (err: any) {
-					spinner.stop('Analysis failed');
-					p.log.error(err.message);
-				}
+				spinner.stop("Changes analyzed!");
+				p.note(
+					`${green("Generated description:")}\n"${description}"`,
+					"AI Analysis"
+				);
+			} catch (err: any) {
+				spinner.stop("Analysis failed");
+				p.log.error(err.message);
 			}
 		}
 	}
 
 	if (!description && !isHeadless) {
 		description = (await p.text({
-			message: hasChanges ? 'Describe your changes:' : 'What is this branch for?',
+			message: hasChanges
+				? "Describe your changes:"
+				: "What is this branch for?",
 			placeholder: hasChanges
-				? 'e.g., Update authentication docs'
-				: 'e.g., Add user authentication feature',
+				? "e.g., Update authentication docs"
+				: "e.g., Add user authentication feature",
 		})) as string;
 
-		if (p.isCancel(description)) { p.cancel('Operation cancelled'); process.exit(0); }
+		if (p.isCancel(description)) {
+			p.cancel("Operation cancelled");
+			process.exit(0);
+		}
 	}
 
-	if (!isHeadless && !typeFromFlag) {
-		branchType = await selectBranchType(
-			hasChanges ? detectChangeType(changedFiles) || undefined : undefined,
-		);
+	if (!isHeadless && !typeFromFlag && !branchType) {
+		branchType = await selectBranchType();
 	}
 
 	const count = flags.generate ?? config.generate;
 
 	if (!isHeadless) {
 		const spinner = p.spinner();
-		spinner.start('Generating branch names with AI...');
+		spinner.start("Generating branch names with AI...");
 
 		try {
 			const [diff, status, currentBranch, recentCommits] = await Promise.all([
-				getGitDiff().catch(() => ''),
-				getGitStatus().catch(() => ''),
-				getCurrentBranch().catch(() => 'main'),
+				getGitDiff().catch(() => ""),
+				getGitStatus().catch(() => ""),
+				getCurrentBranch().catch(() => "main"),
 				getRecentCommits().catch(() => []),
 			]);
 
 			const context = [
 				`Current Branch: ${currentBranch}`,
-				`Recent Commits: ${recentCommits.join(', ')}`,
+				`Recent Commits: ${recentCommits.join(", ")}`,
 				`Git Status: ${status}`,
-				hasChanges ? `Changed Files: ${changedFiles.join(', ')}` : '',
-				diff ? `Recent Changes:\n${diff.slice(0, 1000)}` : '',
-			].filter(Boolean).join('\n');
+				hasChanges ? `Changed Files: ${changedFiles.join(", ")}` : "",
+				diff ? `Recent Changes:\n${diff.slice(0, 1000)}` : "",
+			]
+				.filter(Boolean)
+				.join("\n");
 
 			const branchNames = await generateBranchNames({
 				context,
@@ -156,30 +159,36 @@ export async function generateBranchCommand(flags: {
 				type: branchType,
 				count,
 				locale: config.locale,
-				maxLength: config['max-length'],
+				maxLength: config["max-length"],
 			});
 
-			spinner.stop('Branch names generated!');
+			spinner.stop("Branch names generated!");
 
 			const selectedBranch = await p.select({
-				message: 'Select a branch name:',
+				message: "Select a branch name:",
 				options: [
 					...branchNames.map((name) => ({ value: name, label: name })),
-					{ value: '__custom__', label: yellow('✏️  Enter custom name') },
+					{ value: "__custom__", label: yellow("✏️  Enter custom name") },
 				],
 			});
 
-			if (p.isCancel(selectedBranch)) { p.cancel('Operation cancelled'); process.exit(0); }
+			if (p.isCancel(selectedBranch)) {
+				p.cancel("Operation cancelled");
+				process.exit(0);
+			}
 
 			let finalBranchName = selectedBranch as string;
 
-			if (selectedBranch === '__custom__') {
+			if (selectedBranch === "__custom__") {
 				finalBranchName = (await p.text({
-					message: 'Enter branch name:',
-					placeholder: 'feat/my-custom-branch',
+					message: "Enter branch name:",
+					placeholder: "feat/my-custom-branch",
 				})) as string;
 
-				if (p.isCancel(finalBranchName)) { p.cancel('Operation cancelled'); process.exit(0); }
+				if (p.isCancel(finalBranchName)) {
+					p.cancel("Operation cancelled");
+					process.exit(0);
+				}
 			}
 
 			if (flags.clipboard) {
@@ -188,11 +197,16 @@ export async function generateBranchCommand(flags: {
 				return;
 			}
 
-			const shouldCreate = flags.yes || (await p.confirm({
-				message: `Create and checkout branch "${finalBranchName}"?`,
-			}));
+			const shouldCreate =
+				flags.yes ||
+				(await p.confirm({
+					message: `Create and checkout branch "${finalBranchName}"?`,
+				}));
 
-			if (p.isCancel(shouldCreate)) { p.cancel('Operation cancelled'); process.exit(0); }
+			if (p.isCancel(shouldCreate)) {
+				p.cancel("Operation cancelled");
+				process.exit(0);
+			}
 
 			if (shouldCreate) {
 				await createBranch(finalBranchName, true);
@@ -201,7 +215,7 @@ export async function generateBranchCommand(flags: {
 				p.outro(`Branch name: ${cyan(finalBranchName)}`);
 			}
 		} catch (err: any) {
-			spinner.stop('Failed to generate branch names');
+			spinner.stop("Failed to generate branch names");
 			p.cancel(err.message);
 			process.exit(1);
 		}
@@ -210,19 +224,21 @@ export async function generateBranchCommand(flags: {
 
 	// Headless mode: output first branch name to stdout
 	const [diff, status, currentBranch, recentCommits] = await Promise.all([
-		getGitDiff().catch(() => ''),
-		getGitStatus().catch(() => ''),
-		getCurrentBranch().catch(() => 'main'),
+		getGitDiff().catch(() => ""),
+		getGitStatus().catch(() => ""),
+		getCurrentBranch().catch(() => "main"),
 		getRecentCommits().catch(() => []),
 	]);
 
 	const context = [
 		`Current Branch: ${currentBranch}`,
-		`Recent Commits: ${recentCommits.join(', ')}`,
+		`Recent Commits: ${recentCommits.join(", ")}`,
 		`Git Status: ${status}`,
-		hasChanges ? `Changed Files: ${changedFiles.join(', ')}` : '',
-		diff ? `Recent Changes:\n${diff.slice(0, 1000)}` : '',
-	].filter(Boolean).join('\n');
+		hasChanges ? `Changed Files: ${changedFiles.join(", ")}` : "",
+		diff ? `Recent Changes:\n${diff.slice(0, 1000)}` : "",
+	]
+		.filter(Boolean)
+		.join("\n");
 
 	const branchNames = await generateBranchNames({
 		context,
@@ -230,8 +246,8 @@ export async function generateBranchCommand(flags: {
 		type: branchType,
 		count: 1,
 		locale: config.locale,
-		maxLength: config['max-length'],
+		maxLength: config["max-length"],
 	});
 
-	process.stdout.write(branchNames[0] + '\n');
+	process.stdout.write(branchNames[0] + "\n");
 }
