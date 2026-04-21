@@ -23,6 +23,8 @@ export const generateBranchNamePrompt = (
   description: string | undefined,
   context: string,
   count: number,
+  locale: string = 'en',
+  maxLength: number = 75,
 ): string => {
   const lines = [
     "You are an expert Git workflow architect.",
@@ -32,6 +34,7 @@ export const generateBranchNamePrompt = (
     "FORMAT: <type>/<description>",
     `- type: ${type}`,
     `- description: lowercase, hyphen-separated, verb-noun structure`,
+    ...(locale !== 'en' ? [`- language: use ${locale} locale for words`] : []),
     "",
     "EXAMPLES:",
     "  feat/add-user-authentication",
@@ -40,7 +43,7 @@ export const generateBranchNamePrompt = (
     "  refactor/simplify-payment-logic",
     "",
     "CONSTRAINTS:",
-    "- Maximum length: 50 characters",
+    `- Maximum length: ${maxLength} characters`,
     "- No special characters except hyphens",
     "- Use imperative mood (add, fix, update)",
     "- Be specific, avoid generic terms (update, change, improve)",
@@ -69,7 +72,7 @@ export const generateBranchNamePrompt = (
 export const generateDescriptionPrompt = (
   files: string[],
   diff: string,
-  status: string,
+  _status: string,
   fileStats: { added: number; modified: number; deleted: number },
 ): string => {
   return [
