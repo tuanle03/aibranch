@@ -11,10 +11,10 @@
 
 ## 🚀 Features
 
-- 🤖 **Smart Detection** - Automatically detect branch type from file changes
-- 🎯 **Conventional Commits** - Follow standard types (feat, fix, docs, etc.)
-- ⚡️ **Auto-Generate** - AI analyzes changes and suggests branch names
-- 🔧 **Multiple AI Providers** - OpenAI, TogetherAI, Ollama, Custom
+- 🤖 **Zero-prompt workflow** - Auto-analyzes changes and generates branch names instantly, no questions asked
+- 🎯 **Auto branch type** - Detects the right type (feat, fix, docs, etc.) from your file changes automatically
+- ⚡️ **Consistent naming** - All suggestions use the same detected type prefix, just like aicommits
+- 🔧 **Multiple AI Providers** - OpenAI, TogetherAI, Ollama, any OpenAI-compatible endpoint
 - 🎨 **Interactive CLI** - Beautiful prompts powered by @clack/prompts
 - ✅ **Instant Creation** - Create and checkout branch immediately
 
@@ -52,18 +52,17 @@ This will guide you through:
 ### Quick Start
 
 ```bash
-# If you have file changes, AI will auto-detect and suggest
+# Stage your changes, then run — AI does the rest
+git add .
 aibranch
-
-# Manual mode with description
-aibranch -d "Add user authentication"
-
-# Generate with specific type
-aibranch -t feat -d "Add payment gateway"
-
-# Auto-create branch
-aibranch -c -d "Fix login bug"
 ```
+
+That's it. No prompts asking how to proceed or which type to use. aibranch:
+
+1. Detects changed files and infers the branch type
+2. Analyzes the diff with AI to generate a description
+3. Presents branch name options — all with the same consistent type prefix
+4. You pick one and it creates the branch
 
 ### Options
 
@@ -71,49 +70,81 @@ aibranch -c -d "Fix login bug"
 aibranch [options]
 
 Options:
-  -d, --description <text>    Description of what the branch is for
+  -d, --description <text>    Skip AI analysis, use this description directly
   -g, --generate <number>     Number of branch names to generate (default: 3)
-  -t, --type <type>          Branch type (feat/fix/docs/style/refactor/perf/test/chore/build/ci)
-  -c, --create               Automatically create the selected branch
+  -t, --type <type>           Override auto-detected type (feat/fix/docs/style/refactor/perf/test/chore/build/ci)
+  -a, --all                   Stage all tracked changes before generating
+  -y, --yes                   Skip confirmation and create branch immediately
+  -c, --clipboard             Copy selected branch name to clipboard instead of creating
+  -e, --exclude <files>       Comma-separated list of files to exclude from analysis
 ```
 
 ### Examples
 
 ```bash
-# Auto-mode: AI detects changes and generates description
+# Auto-mode: analyze staged changes and generate branch names
 git add .
 aibranch
-# → 🤖 Auto-generate (AI analyzes your changes)
 
-# Generate 5 branch names
-aibranch -g 5 -d "Implement payment gateway"
+# Provide your own description (skips AI analysis step)
+aibranch -d "Add user authentication"
 
-# Generate bugfix branch
+# Force a specific type
 aibranch -t fix -d "Fix login redirect issue"
 
-# Generate and auto-create branch
-aibranch -c -d "Add email notifications"
+# Generate 5 options
+aibranch -g 5
+
+# Stage all tracked files, generate, and create without confirmation
+aibranch --all --yes
+
+# Copy branch name to clipboard instead of checking out
+aibranch --clipboard
 ```
 
 ## 🎯 How It Works
 
-### Smart Detection
+### Workflow (aicommits-style)
 
-1. Detects file changes in your working directory
-2. Analyzes file patterns to suggest branch type:
-   - `.md` files → `docs`
-   - `.test.ts` files → `test`
-   - `.github/workflows/` → `ci`
-   - `tsconfig.json` → `chore`
-   - Source files → `feat`
+```
+git add .
+aibranch
+  │
+  ├─ Detects changed files → infers branch type (feat/fix/docs/...)
+  ├─ Analyzes git diff with AI → generates a description
+  ├─ Generates N branch names, all using the detected type prefix
+  │
+  └─ You pick one → branch created and checked out
+```
 
-### Auto-Generate Mode
+No "how do you want to proceed?" prompt. No branch type selection step. Just results.
 
-1. Analyzes your git diff and changed files
-2. Uses AI to generate a clear description
-3. Suggests appropriate branch type
-4. Creates multiple branch name options
-5. You select and create instantly
+### Smart Type Detection
+
+File patterns are matched to branch types automatically:
+
+| Files changed | Detected type |
+|---|---|
+| `*.md`, `docs/**` | `docs` |
+| `*.test.ts`, `*.spec.*` | `test` |
+| `.github/workflows/**` | `ci` |
+| `tsconfig.json`, `package.json` | `chore` |
+| `src/**` | `feat` |
+
+The detected type is used as the prefix for **all** generated branch names — no mixing of types across suggestions.
+
+## ⚙️ Configuration
+
+```bash
+# View current config
+aibranch config
+
+# Set a value
+aibranch config generate 5
+aibranch config model gpt-4o
+```
+
+Available keys: `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL`, `generate`, `type`, `locale`, `max-length`, `timeout`
 
 ## 🤝 Contributing
 

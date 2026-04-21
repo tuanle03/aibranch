@@ -94,7 +94,13 @@ jobs:
         run: pnpm run build
 
       - name: Publish to npm
-        run: pnpm publish --provenance --access public --no-git-checks
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if npm view "@tuanle03/aibranch@$VERSION" version 2>/dev/null | grep -q "$VERSION"; then
+            echo "⏭️ Version $VERSION already published, skipping"
+            exit 0
+          fi
+          pnpm publish --provenance --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.TOKEN_NPM }}
 
@@ -147,6 +153,12 @@ jobs:
         run: pnpm run build
 
       - name: Publish to GitHub Packages
-        run: pnpm publish --no-git-checks
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if npm view "@tuanle03/aibranch@$VERSION" version 2>/dev/null | grep -q "$VERSION"; then
+            echo "⏭️ Version $VERSION already published to GitHub Packages, skipping"
+            exit 0
+          fi
+          pnpm publish --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.TOKEN_GITHUB }}
