@@ -1,6 +1,6 @@
 import { command } from "cleye";
 import * as p from "@clack/prompts";
-import { setConfig } from "../utils/config.js";
+import { setConfig } from "../utils/config-runtime.js";
 
 export const setupCommand = command(
   {

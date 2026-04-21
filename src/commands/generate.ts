@@ -12,7 +12,7 @@ import {
   getFileStats,
 } from "../utils/git.js";
 import { generateBranchNames, generateDescription } from "../utils/ai.js";
-import { getConfig } from "../utils/config.js";
+import { getConfig } from "../utils/config-runtime.js";
 import {
   selectBranchType,
   showDetectionInfo,

@@ -1,7 +1,7 @@
 import { generateText } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
-import { getConfig } from "./config.js";
+import { getConfig } from "./config-runtime.js";
 import {
   generateBranchNamePrompt,
   generateDescriptionPrompt,

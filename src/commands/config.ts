@@ -1,6 +1,6 @@
 import { command } from "cleye";
 import { cyan, dim, green } from "kolorist";
-import { getConfig, setConfig, getAllConfig } from "../utils/config.js";
+import { getConfig, setConfig, getAllConfig } from "../utils/config-runtime.js";
 
 const getSubcommand = command(
   {
@@ -11,7 +11,7 @@ const getSubcommand = command(
   async (argv) => {
     const config = await getConfig();
     const key = argv._.key as string;
-    const value = config[key];
+    const value = (config as Record<string, unknown>)[key];
 
     if (value === undefined) {
       console.log(dim(`Config key "${key}" not found`));
