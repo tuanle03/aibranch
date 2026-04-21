@@ -40,3 +40,6 @@ coverage/
 
 # Config
 .aibranch
+
+# Worktrees
+.worktrees/
